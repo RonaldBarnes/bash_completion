@@ -1,0 +1,38 @@
+## Create system for bash auto-completion that supports words with
+## space characters embedded.
+##
+## (c) Ronald Barnes 2022  GPL
+##
+## Place completion files in /etc/bash_completion.d/
+## Set ownership to root: chown -v root: $file
+## Ensure only root user can modify: chmod -v 0644 $file
+##
+## To invoke competion on words with spaces, i.e. "one two":
+## $file one\[TAB]  --> gives $file one\ two  which
+## passes "one two" to $file (without quotes)
+
+function _bclug()
+	{
+	## Escape the CWORD (Current WORD) so space-embedded words work:
+	local CWORD=$(printf '%q' ${COMP_WORDS[COMP_CWORD]})
+
+	## Create a list of 3 words to complete:
+	local word_list=(three "three four" "three four five")
+
+	## Iterate through word list...
+	local word_counter=0
+	for (( ; word_counter<${#word_list[@]} ; word_counter++)); do
+		## Escaping the spaces, etc. embedded in each word:
+		word_list[$word_counter]=$(printf '"%q"' ${word_list[word_counter]})
+	done
+
+	## Create a list of matches to our current word:
+	local cg=$(compgen -W "${word_list[*]}" -- "${CWORD}")
+
+	## Set return value: must be inside () (subshell):
+	##	COMPREPLY=($(printf '%s' "${cg[@]}"))
+	COMPREPLY=(${cg[*]})
+	}
+## Set function _bclug to run auto-completion on command "bclug":
+complete -F _bclug bclug.sh
+
